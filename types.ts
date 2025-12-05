@@ -19,6 +19,7 @@ export interface Coin {
   history: HistoricalPoint[]; // 7 days of hourly data or daily data
   image: string;
   description?: string;
+  tags: string[]; // New: Categories like DeFi, Meme, AI, etc.
 }
 
 export interface Exchange {
@@ -84,6 +85,18 @@ export interface PortfolioItem {
   avgBuyPrice: number;
 }
 
+export interface NotificationPreferences {
+  marketingEmails: boolean;
+  priceAlerts: boolean;
+  securityAlerts: boolean;
+  newsletter: boolean;
+}
+
+export interface SecuritySettings {
+  twoFactorEnabled: boolean;
+  lastPasswordChange: string;
+}
+
 export interface UserSettings {
   displayName: string;
   email: string;
@@ -91,6 +104,11 @@ export interface UserSettings {
   currency: string;
   theme: 'light' | 'dark';
   language: string;
+  bio?: string;
+  website?: string;
+  birthdate?: string;
+  notifications: NotificationPreferences;
+  security: SecuritySettings;
 }
 
 // Community Types

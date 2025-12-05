@@ -1,3 +1,4 @@
+
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PortfolioItem, UserSettings } from '../types';
 import { userService } from '../services/userService';
@@ -11,10 +12,23 @@ interface UserState {
 const initialSettings: UserSettings = {
   displayName: 'Crypto Investor',
   email: 'user@example.com',
-  avatarUrl: 'https://ui-avatars.com/api/?name=Crypto+Investor&background=0D8ABC&color=fff',
+  avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
   currency: 'USD',
   theme: 'light',
-  language: 'en'
+  language: 'en',
+  bio: '',
+  website: '',
+  birthdate: '',
+  notifications: {
+    marketingEmails: false,
+    priceAlerts: true,
+    securityAlerts: true,
+    newsletter: true
+  },
+  security: {
+    twoFactorEnabled: false,
+    lastPasswordChange: '2023-01-01'
+  }
 };
 
 const initialState: UserState = {

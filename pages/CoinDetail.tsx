@@ -7,6 +7,7 @@ import { ArrowLeft, ExternalLink, Share2, Star, Info, FileText, Github } from 'l
 import { formatCurrency, formatCompactNumber, PercentChange } from '../components/Formatters';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { PriceCell } from '../components/PriceCell';
+import { CryptoConverter } from '../components/CryptoConverter';
 
 export const CoinDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -72,8 +73,19 @@ export const CoinDetail = () => {
                  <button className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50"><Share2 size={18} /></button>
               </div>
             </div>
+
+            {/* Tags / Categories */}
+            {coin.tags && coin.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                    {coin.tags.map(tag => (
+                        <span key={tag} className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs font-medium rounded-md">
+                            {tag}
+                        </span>
+                    ))}
+                </div>
+            )}
             
-            <div className="flex flex-wrap items-end gap-4">
+            <div className="flex flex-wrap items-end gap-4 mt-2">
               <PriceCell price={coin.price} className="text-4xl font-bold" />
               <div className={`flex items-center px-2 py-1 rounded-lg text-lg font-semibold ${isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                 <PercentChange value={coin.percentChange24h} />
@@ -141,6 +153,8 @@ export const CoinDetail = () => {
 
         {/* Sidebar Stats (Right Column) */}
         <div className="space-y-6">
+            
+            {/* Stats Card */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-100">
                     <h3 className="font-bold text-gray-900">{coin.symbol} Statistics</h3>
@@ -169,6 +183,10 @@ export const CoinDetail = () => {
                 </div>
             </div>
 
+            {/* Converter Widget */}
+            <CryptoConverter symbol={coin.symbol} price={coin.price} image={coin.image} />
+
+            {/* Links Card */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
                 <h3 className="font-bold text-gray-900 mb-4">Official Links</h3>
                 <div className="space-y-3">

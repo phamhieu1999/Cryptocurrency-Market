@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, ChevronRight, ChevronLeft, Check, ChevronDown } from 'lucide-react';
+import { Star, ChevronRight, ChevronLeft, Check, ChevronDown, Filter } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { toggleWatchlist } from '../store/userSlice';
 import { fetchMarketHighlights } from '../store/cryptoSlice';
@@ -23,6 +23,7 @@ export const Home = () => {
   // Filter & Column Visibility States
   const [activeTimeframe, setActiveTimeframe] = useState<'all' | '1h' | '24h' | '7d'>('all');
   const [activeTab, setActiveTab] = useState('Top');
+  const [activeCategory, setActiveCategory] = useState<string>('All');
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const customizeRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +37,8 @@ export const Home = () => {
     circulatingSupply: true,
     chart: true
   });
+
+  const categories = ['All', 'DeFi', 'Meme', 'AI', 'Gaming', 'Layer 1', 'Layer 2', 'Smart Contracts', 'Stablecoin'];
 
   useEffect(() => {
     dispatch(fetchMarketHighlights());
@@ -70,28 +73,32 @@ export const Home = () => {
   const toggleColumn = (key: string) => {
     const k = key as keyof typeof visibleColumns;
     setVisibleColumns(prev => ({ ...prev, [k]: !prev[k] }));
-    if (['percent1h', 'percent24h', 'percent7d'].includes(key)) {
-        // logic for manual toggle
-    }
   };
 
-  // Sorting based on Tabs
-  const getSortedCoins = () => {
-    let sorted = [...coins];
+  // Sorting & Filtering
+  const getProcessedCoins = () => {
+    let processed = [...coins];
+
+    // 1. Filter by Category
+    if (activeCategory !== 'All') {
+      processed = processed.filter(coin => coin.tags?.includes(activeCategory));
+    }
+
+    // 2. Sort based on Tabs
     if (activeTab === 'Gainers') {
-      sorted.sort((a, b) => b.percentChange24h - a.percentChange24h);
+      processed.sort((a, b) => b.percentChange24h - a.percentChange24h);
     } else if (activeTab === 'Trending') {
       // Mock trending by picking specific IDs or random shuffle seeded (using rank for demo)
-      sorted.sort((a, b) => (a.rank % 7) - (b.rank % 7));
+      processed.sort((a, b) => (a.rank % 7) - (b.rank % 7));
     } else if (activeTab === 'New') {
-      sorted.sort((a, b) => b.rank - a.rank); // Mock new by showing lower rank
+      processed.sort((a, b) => b.rank - a.rank); // Mock new by showing lower rank
     }
     // Default 'Top' is already sorted by rank in initial state
-    return sorted;
+    return processed;
   };
 
   // Pagination Logic
-  const displayCoins = getSortedCoins();
+  const displayCoins = getProcessedCoins();
   const totalPages = Math.ceil(displayCoins.length / itemsPerPage);
   const indexOfLastCoin = currentPage * itemsPerPage;
   const indexOfFirstCoin = indexOfLastCoin - itemsPerPage;
@@ -157,6 +164,26 @@ export const Home = () => {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">{t('home.title')}</h1>
           <p className="text-gray-500 mt-1">{t('home.subtitle')} <span className="text-blue-600 font-medium">$3.14T</span>, a <span className="text-red-600 font-medium">1.34%</span> {t('home.decrease')}.</p>
+        </div>
+
+        {/* Category Pills */}
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto scrollbar-hide py-1">
+           <div className="flex items-center gap-2 text-gray-500 mr-2 text-sm font-bold">
+               <Filter size={16} /> Filters
+           </div>
+           {categories.map(cat => (
+             <button
+                key={cat}
+                onClick={() => { setActiveCategory(cat); setCurrentPage(1); }}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+                  activeCategory === cat
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+             >
+                {cat}
+             </button>
+           ))}
         </div>
 
         {/* Filters & Customize */}
@@ -257,6 +284,12 @@ export const Home = () => {
                       </td>
                     </tr>
                   ))
+                ) : currentCoins.length === 0 ? (
+                  <tr>
+                    <td colSpan={11} className="px-6 py-12 text-center text-gray-500">
+                        No coins found in this category.
+                    </td>
+                  </tr>
                 ) : (
                   currentCoins.map((coin) => (
                     <tr key={coin.id} className="hover:bg-gray-50 transition-colors group">

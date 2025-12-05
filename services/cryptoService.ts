@@ -130,6 +130,55 @@ const RAW_DATA: [string, string, string, number, number, number, string?][] = [
   ['holotoken', 'Holo', 'HOT', 0.002, 0.4, 2682]
 ];
 
+const getTags = (symbol: string, name: string): string[] => {
+  const tags: string[] = [];
+  
+  // Categorization Logic
+  const s = symbol.toUpperCase();
+  const n = name.toLowerCase();
+
+  if (['BTC', 'LTC', 'BCH', 'DOGE', 'BSV', 'ZEC', 'DASH', 'ETC', 'RVN'].includes(s)) {
+    tags.push('Mineable', 'PoW');
+  } else {
+    tags.push('PoS'); // Simplify assumption for demo
+  }
+
+  if (['ETH', 'SOL', 'ADA', 'AVAX', 'DOT', 'NEAR', 'MATIC', 'TRX', 'BNB', 'ATOM', 'FTM', 'ALGO', 'SUI', 'APT', 'SEI'].includes(s)) {
+    tags.push('Smart Contracts', 'Layer 1');
+  }
+
+  if (['UNI', 'AAVE', 'MKR', 'CAKE', 'CRV', 'COMP', '1INCH', 'SNX', 'RUNE', 'LDO', 'INJ'].includes(s)) {
+    tags.push('DeFi', 'DEX', 'DAO');
+  }
+
+  if (['DOGE', 'SHIB', 'PEPE', 'BONK', 'FLOKI', 'WIF'].includes(s)) {
+    tags.push('Meme');
+  }
+
+  if (['USDT', 'USDC', 'DAI', 'FDUSD', 'TUSD'].includes(s)) {
+    tags.push('Stablecoin');
+  }
+
+  if (['AXS', 'SAND', 'MANA', 'GALA', 'ENJ', 'IMX', 'BEAM'].includes(s) || n.includes('game')) {
+    tags.push('Gaming', 'Metaverse', 'NFT');
+  }
+
+  if (['FET', 'RNDR', 'AGIX', 'OCEAN', 'NEAR', 'TAO'].includes(s)) {
+    tags.push('AI');
+  }
+
+  if (['ARB', 'OP', 'MATIC', 'MNT', 'IMX', 'STX'].includes(s)) {
+    tags.push('Layer 2');
+  }
+  
+  if (tags.length === 1 && tags[0] === 'PoS') {
+      // Add generic tags if none specific matched
+      tags.push('Utility Token');
+  }
+
+  return tags;
+};
+
 // Hydrate raw data into full objects
 const COINS_DB: Coin[] = RAW_DATA.map((item, index) => {
   const [id, name, symbol, price, marketCapB, cmcId, description] = item;
@@ -160,7 +209,8 @@ const COINS_DB: Coin[] = RAW_DATA.map((item, index) => {
     percentChange7d,
     history: generateHistory(price),
     image: `https://s2.coinmarketcap.com/static/img/coins/64x64/${cmcId}.png`,
-    description: description || `${name} (${symbol}) is a popular cryptocurrency asset.`
+    description: description || `${name} (${symbol}) is a popular cryptocurrency asset.`,
+    tags: getTags(symbol, name)
   };
 });
 
