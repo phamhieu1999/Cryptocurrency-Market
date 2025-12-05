@@ -1,0 +1,5 @@
+{
+  "name": "CryptoMarketCap Clone",
+  "description": "A professional cryptocurrency market dashboard featuring real-time data visualization, detailed coin analysis, and market trends using mocked services.",
+  "requestFramePermissions": []
+}
