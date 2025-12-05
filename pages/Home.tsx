@@ -1,26 +1,57 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, ChevronRight } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchCoins } from '../store/cryptoSlice';
+import { Star, ChevronRight, ChevronLeft } from 'lucide-react';
+import { useAppSelector } from '../store/hooks';
 import { formatCurrency, formatCompactNumber, PercentChange } from '../components/Formatters';
 import { Sparkline } from '../components/Sparkline';
 
 export const Home = () => {
-  const dispatch = useAppDispatch();
   const { coins, status } = useAppSelector((state) => state.crypto);
   const loading = status === 'loading' || status === 'idle';
 
-  useEffect(() => {
-    if (status === 'idle') {
-      dispatch(fetchCoins());
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Pagination Logic
+  const totalPages = Math.ceil(coins.length / itemsPerPage);
+  const indexOfLastCoin = currentPage * itemsPerPage;
+  const indexOfFirstCoin = indexOfLastCoin - itemsPerPage;
+  const currentCoins = coins.slice(indexOfFirstCoin, indexOfLastCoin);
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) handlePageChange(currentPage - 1);
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) handlePageChange(currentPage + 1);
+  };
+
+  // Generate page numbers to display (CoinMarketCap style)
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
+    } else {
+      if (currentPage <= 4) {
+        pageNumbers.push(1, 2, 3, 4, 5, '...', totalPages);
+      } else if (currentPage >= totalPages - 3) {
+        pageNumbers.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pageNumbers.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+      }
     }
-  }, [status, dispatch]);
+    return pageNumbers;
+  };
 
   return (
     <div className="pb-12">
       {/* Top Highlights Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Today's Cryptocurrency Prices by Market Cap</h1>
           <p className="text-gray-500 mt-1">The global crypto market cap is <span className="text-blue-600 font-medium">$2.45T</span>, a <span className="text-green-600 font-medium">1.2%</span> increase over the last day.</p>
@@ -39,7 +70,7 @@ export const Home = () => {
         </div>
 
         {/* Coin Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden min-h-[600px]">
           <div className="overflow-x-auto scrollbar-hide">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -59,7 +90,7 @@ export const Home = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
-                  Array.from({ length: 5 }).map((_, idx) => (
+                  Array.from({ length: 10 }).map((_, idx) => (
                     <tr key={idx} className="animate-pulse">
                       <td colSpan={11} className="px-6 py-4">
                         <div className="h-4 bg-gray-200 rounded w-full"></div>
@@ -67,7 +98,7 @@ export const Home = () => {
                     </tr>
                   ))
                 ) : (
-                  coins.map((coin) => (
+                  currentCoins.map((coin) => (
                     <tr key={coin.id} className="hover:bg-gray-50 transition-colors group">
                       <td className="px-4 py-4 whitespace-nowrap text-center">
                          <Star size={16} className="text-gray-300 cursor-pointer hover:text-yellow-400 hover:fill-yellow-400" />
@@ -76,7 +107,7 @@ export const Home = () => {
                       <td className="px-4 py-4 whitespace-nowrap sticky left-0 bg-white group-hover:bg-gray-50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] md:shadow-none">
                         <Link to={`/coin/${coin.id}`} className="flex items-center">
                           <img 
-                            src={`https://picsum.photos/seed/${coin.id}/64/64`} 
+                            src={coin.image} 
                             alt={coin.name} 
                             className="h-8 w-8 rounded-full" 
                           />
@@ -128,16 +159,50 @@ export const Home = () => {
           </div>
         </div>
         
-        {/* Pagination Mockup */}
-        <div className="mt-6 flex justify-between items-center text-sm text-gray-500">
-             <div>Showing 1 - 10 of 10 coins</div>
-             <div className="flex gap-2">
-                <button className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50" disabled>Previous</button>
-                <button className="px-3 py-1 border rounded bg-blue-50 text-blue-600 border-blue-200">1</button>
-                <button className="px-3 py-1 border rounded hover:bg-gray-50">2</button>
-                <button className="px-3 py-1 border rounded hover:bg-gray-50">Next</button>
+        {/* Pagination Controls */}
+        {!loading && coins.length > 0 && (
+          <div className="mt-6 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500 gap-4">
+             <div>
+                Showing {indexOfFirstCoin + 1} - {Math.min(indexOfLastCoin, coins.length)} of {coins.length} coins
              </div>
-        </div>
+             <div className="flex items-center gap-1">
+                <button 
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 1}
+                  className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                
+                <div className="flex gap-1">
+                  {getPageNumbers().map((page, index) => (
+                    <button 
+                      key={index}
+                      onClick={() => typeof page === 'number' ? handlePageChange(page) : undefined}
+                      disabled={typeof page !== 'number'}
+                      className={`min-w-[32px] h-8 px-2 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                        page === currentPage 
+                          ? 'bg-blue-600 text-white border border-blue-600' 
+                          : typeof page === 'number' 
+                            ? 'border border-gray-200 hover:bg-gray-50 text-gray-700' 
+                            : 'text-gray-400 cursor-default'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button 
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={16} />
+                </button>
+             </div>
+          </div>
+        )}
       </div>
     </div>
   );

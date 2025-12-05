@@ -37,7 +37,7 @@ export const CoinDetail = () => {
   const chartColor = isPositive ? '#16a34a' : '#dc2626';
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb */}
       <div className="flex items-center text-sm text-gray-500 mb-6 gap-2">
         <Link to="/" className="hover:text-blue-600">Cryptocurrencies</Link>
@@ -55,7 +55,7 @@ export const CoinDetail = () => {
           {/* Header Info */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <img src={`https://picsum.photos/seed/${coin.id}/64/64`} alt={coin.name} className="w-10 h-10 rounded-full" />
+              <img src={coin.image} alt={coin.name} className="w-10 h-10 rounded-full" />
               <h1 className="text-3xl font-bold text-gray-900">{coin.name}</h1>
               <span className="px-2 py-1 bg-gray-100 text-gray-600 font-semibold rounded text-sm">{coin.symbol}</span>
               <div className="ml-auto flex gap-2">

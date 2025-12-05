@@ -16,6 +16,7 @@ export interface Coin {
   percentChange24h: number;
   percentChange7d: number;
   history: HistoricalPoint[]; // 7 days of hourly data or daily data
+  image: string;
   description?: string;
 }
 
@@ -25,4 +26,11 @@ export interface GlobalStats {
   btcDominance: number;
   ethDominance: number;
   activeCryptos: number;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
 }
