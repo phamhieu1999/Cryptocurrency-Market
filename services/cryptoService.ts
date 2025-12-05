@@ -1,4 +1,4 @@
-import { Coin, Exchange, GlobalStats, HistoricalPoint } from '../types';
+import { Coin, Exchange, GlobalStats, HistoricalPoint, MarketHighlights } from '../types';
 
 // Helper to generate random walk data for charts
 const generateHistory = (startPrice: number, points: number = 20): HistoricalPoint[] => {
@@ -215,5 +215,37 @@ export const cryptoService = {
       ethDominance: 17.4,
       activeCryptos: 9845
     };
+  },
+
+  getMarketHighlights: async (): Promise<MarketHighlights> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          marketCap: {
+            value: 3140000000000,
+            change: -1.34,
+            history: generateHistory(3100000000000, 20)
+          },
+          topIndex: {
+            value: 196.22,
+            change: -1.42,
+            history: generateHistory(200, 20)
+          },
+          fearAndGreed: {
+            value: 25,
+            sentiment: 'Fear',
+            history: [30, 28, 25, 26, 25]
+          },
+          altcoinSeason: {
+            value: 23,
+            status: 'Bitcoin Season'
+          },
+          cryptoRsi: {
+            value: 48.97,
+            status: 'Neutral'
+          }
+        });
+      }, 500);
+    });
   }
 };

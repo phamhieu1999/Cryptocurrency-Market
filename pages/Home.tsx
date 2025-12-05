@@ -1,14 +1,20 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, ChevronRight, ChevronLeft, Check, ChevronDown } from 'lucide-react';
-import { useAppSelector } from '../store/hooks';
+import { useAppSelector, useAppDispatch } from '../store/hooks';
+import { toggleWatchlist } from '../store/userSlice';
+import { fetchMarketHighlights } from '../store/cryptoSlice';
 import { formatCurrency, formatCompactNumber, PercentChange } from '../components/Formatters';
 import { Sparkline } from '../components/Sparkline';
 import { PriceCell } from '../components/PriceCell';
+import { HighlightsSection } from '../components/HighlightsSection';
+import { useTranslation } from '../i18n/translations';
 
 export const Home = () => {
-  const { coins, status } = useAppSelector((state) => state.crypto);
+  const dispatch = useAppDispatch();
+  const { coins, status, highlights, highlightsStatus } = useAppSelector((state) => state.crypto);
+  const { watchlist } = useAppSelector((state) => state.user);
+  const { t } = useTranslation();
   const loading = status === 'loading' || status === 'idle';
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -16,6 +22,7 @@ export const Home = () => {
   
   // Filter & Column Visibility States
   const [activeTimeframe, setActiveTimeframe] = useState<'all' | '1h' | '24h' | '7d'>('all');
+  const [activeTab, setActiveTab] = useState('Top');
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const customizeRef = useRef<HTMLDivElement>(null);
 
@@ -29,6 +36,10 @@ export const Home = () => {
     circulatingSupply: true,
     chart: true
   });
+
+  useEffect(() => {
+    dispatch(fetchMarketHighlights());
+  }, [dispatch]);
 
   // Handle Timeframe Presets
   useEffect(() => {
@@ -56,20 +67,35 @@ export const Home = () => {
     };
   }, []);
 
-  const toggleColumn = (key: keyof typeof visibleColumns) => {
-    setVisibleColumns(prev => ({ ...prev, [key]: !prev[key] }));
-    // If manual toggle, we might want to unset the specific timeframe preset visual
+  const toggleColumn = (key: string) => {
+    const k = key as keyof typeof visibleColumns;
+    setVisibleColumns(prev => ({ ...prev, [k]: !prev[k] }));
     if (['percent1h', 'percent24h', 'percent7d'].includes(key)) {
-        // Optional: Reset active timeframe to something neutral if user manually messes with columns
-        // setActiveTimeframe('custom'); // If we had a custom state
+        // logic for manual toggle
     }
   };
 
+  // Sorting based on Tabs
+  const getSortedCoins = () => {
+    let sorted = [...coins];
+    if (activeTab === 'Gainers') {
+      sorted.sort((a, b) => b.percentChange24h - a.percentChange24h);
+    } else if (activeTab === 'Trending') {
+      // Mock trending by picking specific IDs or random shuffle seeded (using rank for demo)
+      sorted.sort((a, b) => (a.rank % 7) - (b.rank % 7));
+    } else if (activeTab === 'New') {
+      sorted.sort((a, b) => b.rank - a.rank); // Mock new by showing lower rank
+    }
+    // Default 'Top' is already sorted by rank in initial state
+    return sorted;
+  };
+
   // Pagination Logic
-  const totalPages = Math.ceil(coins.length / itemsPerPage);
+  const displayCoins = getSortedCoins();
+  const totalPages = Math.ceil(displayCoins.length / itemsPerPage);
   const indexOfLastCoin = currentPage * itemsPerPage;
   const indexOfFirstCoin = indexOfLastCoin - itemsPerPage;
-  const currentCoins = coins.slice(indexOfFirstCoin, indexOfLastCoin);
+  const currentCoins = displayCoins.slice(indexOfFirstCoin, indexOfLastCoin);
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -104,9 +130,33 @@ export const Home = () => {
     <div className="pb-12">
       {/* Top Highlights Section */}
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Navigation Tabs */}
+        <div className="flex items-center gap-6 mb-6 overflow-x-auto scrollbar-hide border-b border-gray-100 pb-1">
+          {['Top', 'Trending', 'Most Visited', 'New', 'Gainers', 'Real-World Assets'].map(tab => (
+             <button
+                key={tab}
+                onClick={() => { setActiveTab(tab); setCurrentPage(1); }}
+                className={`text-base font-bold whitespace-nowrap pb-2 border-b-2 transition-colors ${
+                  activeTab === tab 
+                  ? 'text-blue-600 border-blue-600' 
+                  : 'text-gray-500 border-transparent hover:text-gray-900'
+                }`}
+             >
+                {tab}
+             </button>
+          ))}
+          <button className="text-sm font-bold text-gray-500 hover:text-gray-900 flex items-center gap-1 pb-2">
+             More <ChevronDown size={14} />
+          </button>
+        </div>
+
+        {/* Global Highlight Cards */}
+        <HighlightsSection highlights={highlights} loading={highlightsStatus === 'loading'} />
+
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Today's Cryptocurrency Prices by Market Cap</h1>
-          <p className="text-gray-500 mt-1">The global crypto market cap is <span className="text-blue-600 font-medium">$2.45T</span>, a <span className="text-green-600 font-medium">1.2%</span> increase over the last day.</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('home.title')}</h1>
+          <p className="text-gray-500 mt-1">{t('home.subtitle')} <span className="text-blue-600 font-medium">$3.14T</span>, a <span className="text-red-600 font-medium">1.34%</span> {t('home.decrease')}.</p>
         </div>
 
         {/* Filters & Customize */}
@@ -115,7 +165,7 @@ export const Home = () => {
             onClick={() => setActiveTimeframe('all')}
             className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${activeTimeframe === 'all' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`}
           >
-            All
+            {t('home.all')}
           </button>
           <button 
             onClick={() => setActiveTimeframe('1h')}
@@ -143,7 +193,7 @@ export const Home = () => {
                 onClick={() => setIsCustomizeOpen(!isCustomizeOpen)}
                 className={`px-4 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors ${isCustomizeOpen ? 'bg-gray-200 text-gray-900' : 'bg-gray-100 hover:bg-gray-200 text-gray-900'}`}
             >
-                Customize <ChevronRight size={14} className={`transition-transform ${isCustomizeOpen ? 'rotate-90' : ''}`} />
+                {t('home.customize')} <ChevronRight size={14} className={`transition-transform ${isCustomizeOpen ? 'rotate-90' : ''}`} />
             </button>
             
             {/* Customize Dropdown */}
@@ -154,17 +204,17 @@ export const Home = () => {
                     </div>
                     <div className="space-y-1">
                         {[
-                            { key: 'marketCap', label: 'Market Cap' },
-                            { key: 'volume', label: 'Volume (24h)' },
-                            { key: 'circulatingSupply', label: 'Circulating Supply' },
-                            { key: 'percent1h', label: '1h %' },
-                            { key: 'percent24h', label: '24h %' },
-                            { key: 'percent7d', label: '7d %' },
-                            { key: 'chart', label: '7d Graph' },
+                            { key: 'marketCap', label: t('table.marketcap') },
+                            { key: 'volume', label: t('table.volume') },
+                            { key: 'circulatingSupply', label: t('table.supply') },
+                            { key: 'percent1h', label: t('table.1h') },
+                            { key: 'percent24h', label: t('table.24h') },
+                            { key: 'percent7d', label: t('table.7d') },
+                            { key: 'chart', label: t('table.chart') },
                         ].map((item) => (
                             <button
                                 key={item.key}
-                                onClick={() => toggleColumn(item.key as keyof typeof visibleColumns)}
+                                onClick={() => toggleColumn(item.key)}
                                 className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg group"
                             >
                                 <span>{item.label}</span>
@@ -187,15 +237,15 @@ export const Home = () => {
                 <tr>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-10"></th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16">#</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">Name</th>
-                  {visibleColumns.price && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Price</th>}
-                  {visibleColumns.percent1h && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">1h %</th>}
-                  {visibleColumns.percent24h && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">24h %</th>}
-                  {visibleColumns.percent7d && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">7d %</th>}
-                  {visibleColumns.marketCap && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Market Cap</th>}
-                  {visibleColumns.volume && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Volume(24h)</th>}
-                  {visibleColumns.circulatingSupply && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Circulating Supply</th>}
-                  {visibleColumns.chart && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden xl:table-cell">Last 7 Days</th>}
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">{t('table.name')}</th>
+                  {visibleColumns.price && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">{t('table.price')}</th>}
+                  {visibleColumns.percent1h && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">{t('table.1h')}</th>}
+                  {visibleColumns.percent24h && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">{t('table.24h')}</th>}
+                  {visibleColumns.percent7d && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">{t('table.7d')}</th>}
+                  {visibleColumns.marketCap && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('table.marketcap')}</th>}
+                  {visibleColumns.volume && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">{t('table.volume')}</th>}
+                  {visibleColumns.circulatingSupply && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">{t('table.supply')}</th>}
+                  {visibleColumns.chart && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden xl:table-cell">{t('table.chart')}</th>}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -211,7 +261,11 @@ export const Home = () => {
                   currentCoins.map((coin) => (
                     <tr key={coin.id} className="hover:bg-gray-50 transition-colors group">
                       <td className="px-4 py-4 whitespace-nowrap text-center">
-                         <Star size={16} className="text-gray-300 cursor-pointer hover:text-yellow-400 hover:fill-yellow-400" />
+                         <Star 
+                           size={16} 
+                           className={`cursor-pointer hover:scale-110 transition-transform ${watchlist.includes(coin.id) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 hover:text-yellow-400'}`} 
+                           onClick={() => dispatch(toggleWatchlist(coin.id))}
+                         />
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{coin.rank}</td>
                       <td className="px-4 py-4 whitespace-nowrap sticky left-0 bg-white group-hover:bg-gray-50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] md:shadow-none">
@@ -287,10 +341,10 @@ export const Home = () => {
         </div>
         
         {/* Pagination Controls */}
-        {!loading && coins.length > 0 && (
+        {!loading && displayCoins.length > 0 && (
           <div className="mt-6 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500 gap-4">
              <div>
-                Showing {indexOfFirstCoin + 1} - {Math.min(indexOfLastCoin, coins.length)} of {coins.length} coins
+                {t('home.showing')} {indexOfFirstCoin + 1} - {Math.min(indexOfLastCoin, displayCoins.length)} {t('home.of')} {displayCoins.length} {t('home.coins')}
              </div>
              <div className="flex items-center gap-1">
                 <button 

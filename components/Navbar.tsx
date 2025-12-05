@@ -1,17 +1,22 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Menu, X, Bitcoin, User as UserIcon, LogOut, Loader2 } from 'lucide-react';
+import { Search, Menu, X, Bitcoin, User as UserIcon, LogOut, Loader2, Globe } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout } from '../store/authSlice';
 import { LoginModal } from './LoginModal';
+import { LanguageModal } from './LanguageModal';
+import { useTranslation } from '../i18n/translations';
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   
+  // Translation
+  const { t, language } = useTranslation();
+
   // Search States
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -20,6 +25,7 @@ export const Navbar = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { settings } = useAppSelector((state) => state.user);
   const { coins, status } = useAppSelector((state) => state.crypto);
 
   // Filter coins for search
@@ -44,6 +50,7 @@ export const Navbar = () => {
   const handleLogout = () => {
     dispatch(logout());
     setIsUserMenuOpen(false);
+    navigate('/');
   };
 
   const openLogin = () => {
@@ -77,9 +84,11 @@ export const Navbar = () => {
                 <span className="text-xl font-bold tracking-tight text-gray-900 hidden sm:block">CryptoMarketCap</span>
               </Link>
               <div className="hidden md:ml-8 md:flex md:space-x-8">
-                <Link to="/" className="text-gray-900 font-semibold px-3 py-2 text-sm hover:text-blue-600">Cryptocurrencies</Link>
-                <Link to="/exchanges" className="text-gray-500 hover:text-gray-900 hover:text-blue-600 px-3 py-2 text-sm font-medium">Exchanges</Link>
-                <Link to="/community" className="text-gray-500 hover:text-gray-900 hover:text-blue-600 px-3 py-2 text-sm font-medium">Community</Link>
+                <Link to="/" className="text-gray-900 font-semibold px-3 py-2 text-sm hover:text-blue-600">{t('nav.cryptos')}</Link>
+                <Link to="/exchanges" className="text-gray-500 hover:text-gray-900 hover:text-blue-600 px-3 py-2 text-sm font-medium">{t('nav.exchanges')}</Link>
+                <Link to="/community" className="text-gray-500 hover:text-gray-900 hover:text-blue-600 px-3 py-2 text-sm font-medium">{t('nav.community')}</Link>
+                <Link to="/watchlist" className="text-gray-500 hover:text-gray-900 hover:text-blue-600 px-3 py-2 text-sm font-medium">{t('nav.watchlist')}</Link>
+                <Link to="/portfolio" className="text-gray-500 hover:text-gray-900 hover:text-blue-600 px-3 py-2 text-sm font-medium">{t('nav.portfolio')}</Link>
               </div>
             </div>
             
@@ -95,14 +104,14 @@ export const Navbar = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setIsSearchFocused(true)}
-                    placeholder="Search"
+                    placeholder={t('nav.search')}
                     className="bg-gray-100 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2 outline-none border-transparent border"
                   />
                   {/* Search Dropdown */}
                   {isSearchFocused && searchQuery && (
                     <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
                         <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            Cryptocurrencies
+                            {t('nav.cryptos')}
                         </div>
                         {searchResults.length > 0 ? (
                             <ul>
@@ -135,7 +144,15 @@ export const Navbar = () => {
               </div>
               
               <div className="hidden sm:flex items-center gap-3">
-                 <span className="text-sm font-medium text-gray-500 cursor-pointer hover:text-gray-900">USD</span>
+                 <button 
+                    onClick={() => setIsLanguageModalOpen(true)}
+                    className="font-medium text-gray-500 cursor-pointer hover:text-gray-900 hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                 >
+                    <span className="text-sm uppercase flex items-center gap-1">
+                        <Globe size={16} /> {language}
+                    </span>
+                 </button>
+                 <span className="text-sm font-medium text-gray-500 cursor-pointer hover:text-gray-900 p-2">USD</span>
                  
                  {isAuthenticated && user ? (
                    <div className="relative">
@@ -143,8 +160,8 @@ export const Navbar = () => {
                         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                         className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded-full pr-3 border border-transparent hover:border-gray-200 transition-all"
                      >
-                       <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />
-                       <span className="text-sm font-medium text-gray-700">{user.name}</span>
+                       <img src={settings.avatarUrl || user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />
+                       <span className="text-sm font-medium text-gray-700">{settings.displayName || user.name}</span>
                      </button>
 
                      {isUserMenuOpen && (
@@ -153,14 +170,14 @@ export const Navbar = () => {
                            <p className="text-xs text-gray-500">Signed in as</p>
                            <p className="text-sm font-bold text-gray-900 truncate">{user.email}</p>
                          </div>
-                         <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Watchlist</a>
-                         <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Portfolio</a>
-                         <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Settings</a>
+                         <Link to="/watchlist" onClick={() => setIsUserMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.watchlist')}</Link>
+                         <Link to="/portfolio" onClick={() => setIsUserMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.portfolio')}</Link>
+                         <Link to="/settings" onClick={() => setIsUserMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t('nav.settings')}</Link>
                          <button 
                             onClick={handleLogout}
                             className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                          >
-                           <LogOut size={14} /> Log out
+                           <LogOut size={14} /> {t('nav.logout')}
                          </button>
                        </div>
                      )}
@@ -176,13 +193,13 @@ export const Navbar = () => {
                         onClick={openLogin}
                         className="text-sm font-medium text-gray-900 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors"
                      >
-                       Log In
+                       {t('nav.login')}
                      </button>
                      <button 
                         onClick={openSignup}
                         className="bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
                      >
-                        Sign Up
+                        {t('nav.signup')}
                      </button>
                    </>
                  )}
@@ -230,18 +247,36 @@ export const Navbar = () => {
                     </div>
                   )}
               </div>
-              <Link to="/" className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 bg-gray-50">Cryptocurrencies</Link>
-              <Link to="/exchanges" className="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Exchanges</Link>
-              <Link to="/community" className="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Community</Link>
+              <Link to="/" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 bg-gray-50">{t('nav.cryptos')}</Link>
+              <Link to="/exchanges" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">{t('nav.exchanges')}</Link>
+              <Link to="/community" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">{t('nav.community')}</Link>
               
+              <button 
+                onClick={() => {
+                  setIsLanguageModalOpen(true);
+                  setIsMenuOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 flex items-center gap-2"
+              >
+                  <Globe size={16} /> Language: {language.toUpperCase()}
+              </button>
+
+              {isAuthenticated && (
+                <>
+                  <Link to="/watchlist" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">{t('nav.watchlist')}</Link>
+                  <Link to="/portfolio" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">{t('nav.portfolio')}</Link>
+                  <Link to="/settings" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">{t('nav.settings')}</Link>
+                </>
+              )}
+
               {!isAuthenticated && (
                 <div className="border-t border-gray-100 mt-2 pt-2 flex flex-col gap-2">
-                  <button onClick={openLogin} className="w-full text-center px-3 py-2 rounded-md text-base font-medium text-gray-900 bg-gray-50">Log In</button>
-                  <button onClick={openSignup} className="w-full text-center px-3 py-2 rounded-md text-base font-medium text-white bg-blue-600">Sign Up</button>
+                  <button onClick={openLogin} className="w-full text-center px-3 py-2 rounded-md text-base font-medium text-gray-900 bg-gray-50">{t('nav.login')}</button>
+                  <button onClick={openSignup} className="w-full text-center px-3 py-2 rounded-md text-base font-medium text-white bg-blue-600">{t('nav.signup')}</button>
                 </div>
               )}
               {isAuthenticated && (
-                 <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-red-600 font-medium">Log Out</button>
+                 <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-red-600 font-medium">{t('nav.logout')}</button>
               )}
             </div>
           </div>
@@ -252,6 +287,11 @@ export const Navbar = () => {
         isOpen={isLoginModalOpen} 
         onClose={() => setIsLoginModalOpen(false)} 
         initialMode={authMode}
+      />
+      
+      <LanguageModal
+        isOpen={isLanguageModalOpen}
+        onClose={() => setIsLanguageModalOpen(false)}
       />
     </>
   );

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchCoinById, clearSelectedCoin } from '../store/cryptoSlice';
+import { toggleWatchlist } from '../store/userSlice';
 import { ArrowLeft, ExternalLink, Share2, Star, Info, FileText, Github } from 'lucide-react';
 import { formatCurrency, formatCompactNumber, PercentChange } from '../components/Formatters';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -11,6 +12,7 @@ export const CoinDetail = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const { selectedCoin: coin, detailStatus } = useAppSelector((state) => state.crypto);
+  const { watchlist } = useAppSelector((state) => state.user);
   const loading = detailStatus === 'loading' || detailStatus === 'idle';
 
   useEffect(() => {
@@ -36,6 +38,7 @@ export const CoinDetail = () => {
 
   const isPositive = coin.percentChange24h >= 0;
   const chartColor = isPositive ? '#16a34a' : '#dc2626';
+  const isInWatchlist = watchlist.includes(coin.id);
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -60,7 +63,12 @@ export const CoinDetail = () => {
               <h1 className="text-3xl font-bold text-gray-900">{coin.name}</h1>
               <span className="px-2 py-1 bg-gray-100 text-gray-600 font-semibold rounded text-sm">{coin.symbol}</span>
               <div className="ml-auto flex gap-2">
-                 <button className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50"><Star size={18} /></button>
+                 <button 
+                    onClick={() => dispatch(toggleWatchlist(coin.id))}
+                    className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                 >
+                    <Star size={18} className={isInWatchlist ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'} />
+                 </button>
                  <button className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50"><Share2 size={18} /></button>
               </div>
             </div>

@@ -44,11 +44,53 @@ export interface GlobalStats {
   activeCryptos: number;
 }
 
+export interface MarketHighlights {
+  marketCap: {
+    value: number;
+    change: number;
+    history: HistoricalPoint[];
+  };
+  topIndex: { 
+    value: number;
+    change: number;
+    history: HistoricalPoint[];
+  };
+  fearAndGreed: {
+    value: number; // 0-100
+    sentiment: string;
+    history: number[]; // Last few days
+  };
+  altcoinSeason: {
+    value: number; // 0-100
+    status: string;
+  };
+  cryptoRsi: {
+    value: number; // 0-100
+    status: string;
+  };
+}
+
 export interface User {
   id: string;
   email: string;
   name: string;
   avatar?: string;
+}
+
+export interface PortfolioItem {
+  id: string;
+  coinId: string;
+  amount: number;
+  avgBuyPrice: number;
+}
+
+export interface UserSettings {
+  displayName: string;
+  email: string;
+  avatarUrl: string;
+  currency: string;
+  theme: 'light' | 'dark';
+  language: string;
 }
 
 // Community Types

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Coin, Exchange, GlobalStats } from '../types';
+import { Coin, Exchange, GlobalStats, MarketHighlights } from '../types';
 import { cryptoService } from '../services/cryptoService';
 
 interface CryptoState {
@@ -7,9 +7,11 @@ interface CryptoState {
   exchanges: Exchange[];
   selectedCoin: Coin | null;
   globalStats: GlobalStats | null;
+  highlights: MarketHighlights | null;
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   exchangeStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
   detailStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+  highlightsStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
 }
 
@@ -18,9 +20,11 @@ const initialState: CryptoState = {
   exchanges: [],
   selectedCoin: null,
   globalStats: null,
+  highlights: null,
   status: 'idle',
   exchangeStatus: 'idle',
   detailStatus: 'idle',
+  highlightsStatus: 'idle',
   error: null,
 };
 
@@ -41,6 +45,11 @@ export const fetchCoinById = createAsyncThunk('crypto/fetchCoinById', async (id:
 
 export const fetchGlobalStats = createAsyncThunk('crypto/fetchGlobalStats', async () => {
   const response = await cryptoService.getGlobalStats();
+  return response;
+});
+
+export const fetchMarketHighlights = createAsyncThunk('crypto/fetchMarketHighlights', async () => {
+  const response = await cryptoService.getMarketHighlights();
   return response;
 });
 
@@ -66,6 +75,15 @@ const cryptoSlice = createSlice({
       if (state.selectedCoin && updates[state.selectedCoin.id]) {
         state.selectedCoin.price = updates[state.selectedCoin.id];
       }
+    },
+    updateHighlights: (state, action: PayloadAction<Partial<MarketHighlights>>) => {
+      if (!state.highlights) return;
+      const updates = action.payload;
+      if (updates.marketCap) state.highlights.marketCap = updates.marketCap;
+      if (updates.topIndex) state.highlights.topIndex = updates.topIndex;
+      if (updates.fearAndGreed) state.highlights.fearAndGreed = updates.fearAndGreed;
+      if (updates.altcoinSeason) state.highlights.altcoinSeason = updates.altcoinSeason;
+      if (updates.cryptoRsi) state.highlights.cryptoRsi = updates.cryptoRsi;
     }
   },
   extraReducers: (builder) => {
@@ -109,9 +127,17 @@ const cryptoSlice = createSlice({
       // Fetch Global Stats
       .addCase(fetchGlobalStats.fulfilled, (state, action) => {
         state.globalStats = action.payload;
+      })
+      // Fetch Highlights
+      .addCase(fetchMarketHighlights.pending, (state) => {
+        state.highlightsStatus = 'loading';
+      })
+      .addCase(fetchMarketHighlights.fulfilled, (state, action) => {
+        state.highlightsStatus = 'succeeded';
+        state.highlights = action.payload;
       });
   },
 });
 
-export const { clearSelectedCoin, updatePrices } = cryptoSlice.actions;
+export const { clearSelectedCoin, updatePrices, updateHighlights } = cryptoSlice.actions;
 export default cryptoSlice.reducer;
