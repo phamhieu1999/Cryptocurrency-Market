@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Star, ChevronRight, ChevronLeft, Check, ChevronDown } from 'lucide-react';
 import { useAppSelector } from '../store/hooks';
 import { formatCurrency, formatCompactNumber, PercentChange } from '../components/Formatters';
 import { Sparkline } from '../components/Sparkline';
+import { PriceCell } from '../components/PriceCell';
 
 export const Home = () => {
   const { coins, status } = useAppSelector((state) => state.crypto);
@@ -11,6 +13,57 @@ export const Home = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  
+  // Filter & Column Visibility States
+  const [activeTimeframe, setActiveTimeframe] = useState<'all' | '1h' | '24h' | '7d'>('all');
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+  const customizeRef = useRef<HTMLDivElement>(null);
+
+  const [visibleColumns, setVisibleColumns] = useState({
+    price: true,
+    percent1h: true,
+    percent24h: true,
+    percent7d: true,
+    marketCap: true,
+    volume: true,
+    circulatingSupply: true,
+    chart: true
+  });
+
+  // Handle Timeframe Presets
+  useEffect(() => {
+    if (activeTimeframe === 'all') {
+      setVisibleColumns(prev => ({ ...prev, percent1h: true, percent24h: true, percent7d: true }));
+    } else if (activeTimeframe === '1h') {
+      setVisibleColumns(prev => ({ ...prev, percent1h: true, percent24h: false, percent7d: false }));
+    } else if (activeTimeframe === '24h') {
+      setVisibleColumns(prev => ({ ...prev, percent1h: false, percent24h: true, percent7d: false }));
+    } else if (activeTimeframe === '7d') {
+      setVisibleColumns(prev => ({ ...prev, percent1h: false, percent24h: false, percent7d: true }));
+    }
+  }, [activeTimeframe]);
+
+  // Close customize dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (customizeRef.current && !customizeRef.current.contains(event.target as Node)) {
+        setIsCustomizeOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const toggleColumn = (key: keyof typeof visibleColumns) => {
+    setVisibleColumns(prev => ({ ...prev, [key]: !prev[key] }));
+    // If manual toggle, we might want to unset the specific timeframe preset visual
+    if (['percent1h', 'percent24h', 'percent7d'].includes(key)) {
+        // Optional: Reset active timeframe to something neutral if user manually messes with columns
+        // setActiveTimeframe('custom'); // If we had a custom state
+    }
+  };
 
   // Pagination Logic
   const totalPages = Math.ceil(coins.length / itemsPerPage);
@@ -31,7 +84,6 @@ export const Home = () => {
     if (currentPage < totalPages) handlePageChange(currentPage + 1);
   };
 
-  // Generate page numbers to display (CoinMarketCap style)
   const getPageNumbers = () => {
     const pageNumbers = [];
     if (totalPages <= 7) {
@@ -57,16 +109,74 @@ export const Home = () => {
           <p className="text-gray-500 mt-1">The global crypto market cap is <span className="text-blue-600 font-medium">$2.45T</span>, a <span className="text-green-600 font-medium">1.2%</span> increase over the last day.</p>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3 mb-6">
-          <button className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-lg text-sm font-semibold transition-colors">All</button>
-          <button className="px-4 py-1.5 text-gray-500 hover:bg-gray-100 rounded-lg text-sm font-semibold transition-colors">1h</button>
-          <button className="px-4 py-1.5 text-gray-500 hover:bg-gray-100 rounded-lg text-sm font-semibold transition-colors">24h</button>
-          <button className="px-4 py-1.5 text-gray-500 hover:bg-gray-100 rounded-lg text-sm font-semibold transition-colors">7d</button>
-          <div className="h-4 w-px bg-gray-300 mx-1"></div>
-          <button className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-lg text-sm font-semibold flex items-center gap-2">
-            Customize <ChevronRight size={14} />
+        {/* Filters & Customize */}
+        <div className="flex flex-wrap items-center gap-3 mb-6 relative z-20">
+          <button 
+            onClick={() => setActiveTimeframe('all')}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${activeTimeframe === 'all' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`}
+          >
+            All
           </button>
+          <button 
+            onClick={() => setActiveTimeframe('1h')}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${activeTimeframe === '1h' ? 'bg-blue-100 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
+          >
+            1h
+          </button>
+          <button 
+            onClick={() => setActiveTimeframe('24h')}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${activeTimeframe === '24h' ? 'bg-blue-100 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
+          >
+            24h
+          </button>
+          <button 
+            onClick={() => setActiveTimeframe('7d')}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${activeTimeframe === '7d' ? 'bg-blue-100 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
+          >
+            7d
+          </button>
+          
+          <div className="h-4 w-px bg-gray-300 mx-1"></div>
+          
+          <div className="relative" ref={customizeRef}>
+            <button 
+                onClick={() => setIsCustomizeOpen(!isCustomizeOpen)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors ${isCustomizeOpen ? 'bg-gray-200 text-gray-900' : 'bg-gray-100 hover:bg-gray-200 text-gray-900'}`}
+            >
+                Customize <ChevronRight size={14} className={`transition-transform ${isCustomizeOpen ? 'rotate-90' : ''}`} />
+            </button>
+            
+            {/* Customize Dropdown */}
+            {isCustomizeOpen && (
+                <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 p-2 z-50 animate-in fade-in zoom-in duration-100">
+                    <div className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Toggle Columns
+                    </div>
+                    <div className="space-y-1">
+                        {[
+                            { key: 'marketCap', label: 'Market Cap' },
+                            { key: 'volume', label: 'Volume (24h)' },
+                            { key: 'circulatingSupply', label: 'Circulating Supply' },
+                            { key: 'percent1h', label: '1h %' },
+                            { key: 'percent24h', label: '24h %' },
+                            { key: 'percent7d', label: '7d %' },
+                            { key: 'chart', label: '7d Graph' },
+                        ].map((item) => (
+                            <button
+                                key={item.key}
+                                onClick={() => toggleColumn(item.key as keyof typeof visibleColumns)}
+                                className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg group"
+                            >
+                                <span>{item.label}</span>
+                                {visibleColumns[item.key as keyof typeof visibleColumns] && (
+                                    <Check size={16} className="text-blue-600" />
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+          </div>
         </div>
 
         {/* Coin Table */}
@@ -78,14 +188,14 @@ export const Home = () => {
                   <th scope="col" className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-10"></th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16">#</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">Name</th>
-                  <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Price</th>
-                  <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">1h %</th>
-                  <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">24h %</th>
-                  <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">7d %</th>
-                  <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Market Cap</th>
-                  <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Volume(24h)</th>
-                  <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Circulating Supply</th>
-                  <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden xl:table-cell">Last 7 Days</th>
+                  {visibleColumns.price && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Price</th>}
+                  {visibleColumns.percent1h && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">1h %</th>}
+                  {visibleColumns.percent24h && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">24h %</th>}
+                  {visibleColumns.percent7d && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">7d %</th>}
+                  {visibleColumns.marketCap && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Market Cap</th>}
+                  {visibleColumns.volume && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Volume(24h)</th>}
+                  {visibleColumns.circulatingSupply && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Circulating Supply</th>}
+                  {visibleColumns.chart && <th scope="col" className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider hidden xl:table-cell">Last 7 Days</th>}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -120,37 +230,54 @@ export const Home = () => {
                           </span>
                         </Link>
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                        {formatCurrency(coin.price)}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
-                        <PercentChange value={coin.percentChange1h} className="justify-end" />
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
-                        <PercentChange value={coin.percentChange24h} className="justify-end" />
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
-                         <PercentChange value={coin.percentChange7d} className="justify-end" />
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right hidden md:table-cell">
-                        {formatCurrency(coin.marketCap, 0)}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-right hidden lg:table-cell">
-                        <div className="text-gray-900">{formatCurrency(coin.volume24h, 0)}</div>
-                        <div className="text-xs text-gray-500">{formatCompactNumber(coin.volume24h / coin.price)} {coin.symbol}</div>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-gray-900 hidden lg:table-cell">
-                        <div className="flex flex-col items-end">
-                            <span>{formatCompactNumber(coin.circulatingSupply)} {coin.symbol}</span>
-                            {/* Simple Progress Bar for mock supply */}
-                            <div className="w-16 h-1 bg-gray-200 rounded-full mt-1">
-                                <div className="h-1 bg-gray-400 rounded-full" style={{ width: '80%' }}></div>
+                      {visibleColumns.price && (
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
+                            <div className="flex justify-end">
+                                <PriceCell price={coin.price} />
                             </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-right hidden xl:table-cell">
-                         <Sparkline data={coin.history} isPositive={coin.percentChange7d >= 0} />
-                      </td>
+                        </td>
+                      )}
+                      {visibleColumns.percent1h && (
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
+                            <PercentChange value={coin.percentChange1h} className="justify-end" />
+                        </td>
+                      )}
+                      {visibleColumns.percent24h && (
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
+                            <PercentChange value={coin.percentChange24h} className="justify-end" />
+                        </td>
+                      )}
+                      {visibleColumns.percent7d && (
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right">
+                            <PercentChange value={coin.percentChange7d} className="justify-end" />
+                        </td>
+                      )}
+                      {visibleColumns.marketCap && (
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right hidden md:table-cell">
+                            {formatCurrency(coin.marketCap, 0)}
+                        </td>
+                      )}
+                      {visibleColumns.volume && (
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right hidden lg:table-cell">
+                            <div className="text-gray-900">{formatCurrency(coin.volume24h, 0)}</div>
+                            <div className="text-xs text-gray-500">{formatCompactNumber(coin.volume24h / coin.price)} {coin.symbol}</div>
+                        </td>
+                      )}
+                      {visibleColumns.circulatingSupply && (
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-right text-gray-900 hidden lg:table-cell">
+                            <div className="flex flex-col items-end">
+                                <span>{formatCompactNumber(coin.circulatingSupply)} {coin.symbol}</span>
+                                <div className="w-16 h-1 bg-gray-200 rounded-full mt-1">
+                                    <div className="h-1 bg-gray-400 rounded-full" style={{ width: '80%' }}></div>
+                                </div>
+                            </div>
+                        </td>
+                      )}
+                      {visibleColumns.chart && (
+                        <td className="px-4 py-4 whitespace-nowrap text-right hidden xl:table-cell">
+                            <Sparkline data={coin.history} isPositive={coin.percentChange7d >= 0} />
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Menu, X, Bitcoin, User as UserIcon, LogOut, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -76,9 +77,9 @@ export const Navbar = () => {
                 <span className="text-xl font-bold tracking-tight text-gray-900 hidden sm:block">CryptoMarketCap</span>
               </Link>
               <div className="hidden md:ml-8 md:flex md:space-x-8">
-                <Link to="/" className="text-gray-900 font-semibold px-3 py-2 text-sm">Cryptocurrencies</Link>
-                <a href="#" className="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium">Exchanges</a>
-                <a href="#" className="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium">Community</a>
+                <Link to="/" className="text-gray-900 font-semibold px-3 py-2 text-sm hover:text-blue-600">Cryptocurrencies</Link>
+                <Link to="/exchanges" className="text-gray-500 hover:text-gray-900 hover:text-blue-600 px-3 py-2 text-sm font-medium">Exchanges</Link>
+                <Link to="/community" className="text-gray-500 hover:text-gray-900 hover:text-blue-600 px-3 py-2 text-sm font-medium">Community</Link>
               </div>
             </div>
             
@@ -230,8 +231,8 @@ export const Navbar = () => {
                   )}
               </div>
               <Link to="/" className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 bg-gray-50">Cryptocurrencies</Link>
-              <a href="#" className="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Exchanges</a>
-              <a href="#" className="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Community</a>
+              <Link to="/exchanges" className="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Exchanges</Link>
+              <Link to="/community" className="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Community</Link>
               
               {!isAuthenticated && (
                 <div className="border-t border-gray-100 mt-2 pt-2 flex flex-col gap-2">

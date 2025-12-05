@@ -5,6 +5,7 @@ import { fetchCoinById, clearSelectedCoin } from '../store/cryptoSlice';
 import { ArrowLeft, ExternalLink, Share2, Star, Info, FileText, Github } from 'lucide-react';
 import { formatCurrency, formatCompactNumber, PercentChange } from '../components/Formatters';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { PriceCell } from '../components/PriceCell';
 
 export const CoinDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -65,7 +66,7 @@ export const CoinDetail = () => {
             </div>
             
             <div className="flex flex-wrap items-end gap-4">
-              <span className="text-4xl font-bold text-gray-900">{formatCurrency(coin.price)}</span>
+              <PriceCell price={coin.price} className="text-4xl font-bold" />
               <div className={`flex items-center px-2 py-1 rounded-lg text-lg font-semibold ${isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                 <PercentChange value={coin.percentChange24h} />
                 <span className="ml-1 text-sm">(24h)</span>

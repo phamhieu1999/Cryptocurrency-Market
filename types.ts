@@ -1,3 +1,4 @@
+
 export interface HistoricalPoint {
   date: string;
   price: number;
@@ -20,6 +21,21 @@ export interface Coin {
   description?: string;
 }
 
+export interface Exchange {
+  id: string;
+  rank: number;
+  name: string;
+  score: number;
+  volume24h: number;
+  avgLiquidity: number;
+  weeklyVisits: number;
+  markets: number;
+  coins: number;
+  fiatSupported: string[];
+  image: string;
+  history: HistoricalPoint[];
+}
+
 export interface GlobalStats {
   totalMarketCap: number;
   totalVolume24h: number;
@@ -33,4 +49,33 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
+}
+
+// Community Types
+export interface Author {
+  id: string;
+  name: string;
+  handle: string;
+  avatar: string;
+  isVerified: boolean;
+}
+
+export interface Post {
+  id: string;
+  author: Author;
+  content: string;
+  image?: string;
+  timestamp: string;
+  likes: number;
+  comments: number;
+  reposts: number;
+  coins: string[]; // Symbols like BTC, ETH
+  isLiked?: boolean;
+}
+
+export interface Topic {
+  id: string;
+  name: string;
+  postsCount: number;
+  isTrending: boolean;
 }

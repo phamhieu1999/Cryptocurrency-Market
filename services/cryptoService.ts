@@ -1,4 +1,4 @@
-import { Coin, GlobalStats, HistoricalPoint } from '../types';
+import { Coin, Exchange, GlobalStats, HistoricalPoint } from '../types';
 
 // Helper to generate random walk data for charts
 const generateHistory = (startPrice: number, points: number = 20): HistoricalPoint[] => {
@@ -164,6 +164,29 @@ const COINS_DB: Coin[] = RAW_DATA.map((item, index) => {
   };
 });
 
+const EXCHANGES_DB: Exchange[] = [
+  { id: 'binance', rank: 1, name: 'Binance', score: 9.9, volume24h: 15400000000, avgLiquidity: 850, weeklyVisits: 14500000, markets: 1650, coins: 450, fiatSupported: ['USD', 'EUR', 'GBP', 'AUD', 'BRL'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/270.png' },
+  { id: 'coinbase', rank: 2, name: 'Coinbase Exchange', score: 8.5, volume24h: 2100000000, avgLiquidity: 780, weeklyVisits: 350000, markets: 550, coins: 245, fiatSupported: ['USD', 'EUR', 'GBP'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/89.png' },
+  { id: 'bybit', rank: 3, name: 'Bybit', score: 8.1, volume24h: 4500000000, avgLiquidity: 650, weeklyVisits: 4100000, markets: 850, coins: 550, fiatSupported: ['USD', 'EUR', 'TRY', 'RUB'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/521.png' },
+  { id: 'okx', rank: 4, name: 'OKX', score: 7.9, volume24h: 3200000000, avgLiquidity: 620, weeklyVisits: 2800000, markets: 720, coins: 340, fiatSupported: ['USD', 'CNY', 'EUR'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/294.png' },
+  { id: 'kraken', rank: 5, name: 'Kraken', score: 7.8, volume24h: 850000000, avgLiquidity: 710, weeklyVisits: 1200000, markets: 680, coins: 230, fiatSupported: ['USD', 'EUR', 'CAD', 'GBP', 'JPY'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/24.png' },
+  { id: 'kucoin', rank: 6, name: 'KuCoin', score: 7.2, volume24h: 1100000000, avgLiquidity: 580, weeklyVisits: 1900000, markets: 1400, coins: 850, fiatSupported: ['USD', 'EUR', 'GBP'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/311.png' },
+  { id: 'gate-io', rank: 7, name: 'Gate.io', score: 6.9, volume24h: 950000000, avgLiquidity: 520, weeklyVisits: 1500000, markets: 1800, coins: 1700, fiatSupported: ['USD', 'CNY', 'KRW'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/302.png' },
+  { id: 'htx', rank: 8, name: 'HTX', score: 6.7, volume24h: 1800000000, avgLiquidity: 540, weeklyVisits: 2100000, markets: 950, coins: 650, fiatSupported: ['USD', 'EUR', 'VND'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/102.png' },
+  { id: 'bitfinex', rank: 9, name: 'Bitfinex', score: 6.5, volume24h: 220000000, avgLiquidity: 690, weeklyVisits: 650000, markets: 450, coins: 180, fiatSupported: ['USD', 'EUR', 'GBP', 'JPY'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/79.png' },
+  { id: 'mxc', rank: 10, name: 'MEXC', score: 6.4, volume24h: 1300000000, avgLiquidity: 480, weeklyVisits: 1100000, markets: 2100, coins: 1850, fiatSupported: ['USD', 'KRW', 'VND'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/544.png' },
+  { id: 'crypto-com', rank: 11, name: 'Crypto.com Exchange', score: 6.3, volume24h: 450000000, avgLiquidity: 610, weeklyVisits: 850000, markets: 350, coins: 250, fiatSupported: ['USD', 'EUR'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/1149.png' },
+  { id: 'binance-us', rank: 12, name: 'Binance.US', score: 6.1, volume24h: 35000000, avgLiquidity: 520, weeklyVisits: 150000, markets: 120, coins: 150, fiatSupported: ['USD'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/630.png' },
+  { id: 'gemini', rank: 13, name: 'Gemini', score: 6.0, volume24h: 85000000, avgLiquidity: 590, weeklyVisits: 250000, markets: 110, coins: 95, fiatSupported: ['USD', 'SGD', 'HKD'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/151.png' },
+  { id: 'bitstamp', rank: 14, name: 'Bitstamp', score: 5.9, volume24h: 180000000, avgLiquidity: 650, weeklyVisits: 310000, markets: 160, coins: 85, fiatSupported: ['USD', 'EUR', 'GBP'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/70.png' },
+  { id: 'bitget', rank: 15, name: 'Bitget', score: 5.8, volume24h: 1200000000, avgLiquidity: 500, weeklyVisits: 1800000, markets: 600, coins: 550, fiatSupported: ['USD', 'EUR', 'TRY'], image: 'https://s2.coinmarketcap.com/static/img/exchanges/64x64/513.png' },
+].map(exchange => ({
+    ...exchange,
+    // Generate mock history for the graph
+    history: generateHistory(exchange.volume24h, 7)
+}));
+
+
 export const cryptoService = {
   getCoins: async (): Promise<Coin[]> => {
     // Simulate network delay
@@ -176,6 +199,12 @@ export const cryptoService = {
     return new Promise((resolve) => {
       setTimeout(() => resolve(COINS_DB.find(c => c.id === id)), 400);
     });
+  },
+
+  getExchanges: async (): Promise<Exchange[]> => {
+     return new Promise((resolve) => {
+         setTimeout(() => resolve(EXCHANGES_DB), 500);
+     });
   },
 
   getGlobalStats: async (): Promise<GlobalStats> => {

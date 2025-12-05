@@ -1,11 +1,14 @@
+
 import { configureStore } from '@reduxjs/toolkit';
 import cryptoReducer from './cryptoSlice';
 import authReducer from './authSlice';
+import communityReducer from './communitySlice';
 
 export const store = configureStore({
   reducer: {
     crypto: cryptoReducer,
     auth: authReducer,
+    community: communityReducer,
   },
 });
 
